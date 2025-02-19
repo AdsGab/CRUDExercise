@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check-in</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+<div class="container mt-5">
+    <h2 class="text-center">Check-in for Charging</h2>
+    <form action="checkin.php" method="post">
+        <div class="mb-3">
+            <label>Select Location:</label>
+            <select class="form-control" name="location_id" required>
+                <?php
+                require_once 'Database.php';
+                $db = new Database();
+                $conn = $db->getConnection();
+                $result = $conn->query("SELECT * FROM charging_locations WHERE num_stations > (SELECT COUNT(*) FROM check_ins WHERE charging_locations.id = check_ins.location_id AND end_time IS NULL)");
+                while ($row = $result->fetch_assoc()) {
+                    echo "<option value='{$row["id"]}'>{$row["description"]} ({$row["num_stations"]} stations available)</option>";
+                }
+                ?>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary w-100">Check-in</button>
+    </form>
+</div>
+</body>
+</html>
