@@ -53,5 +53,26 @@ class User {
     public function isAdmin() {
         return isset($_SESSION["user_type"]) && $_SESSION["user_type"] === "admin";
     }
+
+    public function getAllUsers() {
+        $sql = "SELECT id, name, email, phone, type FROM users ORDER BY type, name";
+        return $this->conn->query($sql);
+    }
+
+    public function searchUsers($search = "", $type = "") {
+        $sql = "SELECT id, name, email, phone, type FROM users WHERE name LIKE ? OR email LIKE ?";
+        $params = ["ss", "%".$search."%", "%".$search."%"];
+    
+        if (!empty($type)) {
+            $sql .= " AND type = ?";
+            $params[0] .= "s";
+            $params[] = $type;
+        }
+    
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param(...$params);
+        $stmt->execute();
+        return $stmt->get_result();
+    }
 }
 ?>

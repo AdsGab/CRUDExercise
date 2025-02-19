@@ -5,7 +5,7 @@ include 'ChargingLocation.php';
 session_start();
 $user = new User();
 if (!$user->isAdmin()) {
-    header("Location: login.php");
+    header("Location: login.html");
     exit();
 }
 
@@ -51,7 +51,8 @@ $locations = $chargingLocation->getAllLocations();
             <?php } ?>
         </tbody>
     </table>
-
+    <a href="admin_checkin.php" class="btn btn-info w-100 mb-3">View All Check-ins</a>
+    <a href="admin_users.php" class="btn btn-info w-100 mb-3">Manage Users</a>
     <a href="logout.php" class="btn btn-danger w-100">Logout</a>
 </div>
 </body>

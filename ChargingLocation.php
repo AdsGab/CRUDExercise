@@ -74,6 +74,36 @@ class ChargingLocation {
         return $stmt->get_result()->fetch_assoc();
     }
     
+    public function getAllCheckins($user_id = "", $status = "") {
+        $sql = "SELECT ci.id, u.name AS user_name, u.email, cl.description, ci.start_time, ci.end_time, ci.total_cost 
+                FROM check_ins ci
+                JOIN users u ON ci.user_id = u.id
+                JOIN charging_locations cl ON ci.location_id = cl.id
+                WHERE 1=1";
+    
+        $params = [""];
+    
+        if (!empty($user_id)) {
+            $sql .= " AND ci.user_id = ?";
+            $params[0] .= "i";
+            $params[] = $user_id;
+        }
+    
+        if ($status === "active") {
+            $sql .= " AND ci.end_time IS NULL";
+        } elseif ($status === "completed") {
+            $sql .= " AND ci.end_time IS NOT NULL";
+        }
+    
+        $stmt = $this->conn->prepare($sql);
+        if (count($params) > 1) {
+            $stmt->bind_param(...$params);
+        }
+        $stmt->execute();
+        return $stmt->get_result();
+    }
+    
+    
     public function getActiveUserCheckins($user_id) {
         $sql = "SELECT ci.id, cl.description, ci.start_time, cl.cost_per_hour 
                 FROM check_ins ci
