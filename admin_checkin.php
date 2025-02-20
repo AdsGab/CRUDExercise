@@ -7,17 +7,16 @@ if (!isset($_SESSION["user_id"]) || $_SESSION["user_type"] !== "admin") {
     header("Location: login.php");
     exit();
 }
-$user_id = $_POST["user_id"];
-$chargingLocation = new ChargingLocation();
 
 $chargingLocation = new ChargingLocation();
+$users = (new User())->getAllUsers(); // Fetch all users for the dropdown filter
 
 $filter_user = $_GET["user_id"] ?? "";
 $filter_status = $_GET["status"] ?? "";
-
 $checkins = $chargingLocation->getAllCheckins($filter_user, $filter_status);
-$users = (new User())->getAllUsers(); // Fetch all users for the dropdown filter
 
+// Handle user selection for check-in
+$user_id = $_POST["user_id"] ?? "";
 $availableLocations = $chargingLocation->getAvailableLocations();
 ?>
 
@@ -30,22 +29,27 @@ $availableLocations = $chargingLocation->getAvailableLocations();
 </head>
 <body>
 <div class="container mt-5">
-<h2>Check-in User</h2>
-    <form action="admin_checkin_procedure.php" method="post">
-        <input type="hidden" name="user_id" value="<?= $user_id ?>">
-        
-        <div class="mb-3">
-            <label>Select Charging Location:</label>
-            <select class="form-control" name="location_id" required>
-                <?php while ($row = $availableLocations->fetch_assoc()) { ?>
-                    <option value="<?= $row["id"] ?>"><?= $row["description"] ?> (<?= $row["available_stations"] ?> stations available)</option>
-                <?php } ?>
-            </select>
-        </div>
 
-        <button type="submit" class="btn btn-primary w-100">Confirm Check-in</button>
-    </form>
-<h2 class="text-center">All Check-ins</h2>
+    <!-- Show "Check-in User" Form Only If a User is Selected -->
+    <?php if (!empty($user_id)) { ?>
+        <h2>Check-in User</h2>
+        <form action="admin_checkin_procedure.php" method="post">
+            <input type="hidden" name="user_id" value="<?= htmlspecialchars($user_id) ?>">
+            
+            <div class="mb-3">
+                <label>Select Charging Location:</label>
+                <select class="form-control" name="location_id" required>
+                    <?php while ($row = $availableLocations->fetch_assoc()) { ?>
+                        <option value="<?= $row["id"] ?>"><?= $row["description"] ?> (<?= $row["available_stations"] ?> stations available)</option>
+                    <?php } ?>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">Confirm Check-in</button>
+        </form>
+    <?php } ?>
+
+    <h2 class="text-center">All Check-ins</h2>
     
     <form method="GET" class="mb-3">
         <div class="row">
@@ -100,7 +104,6 @@ $availableLocations = $chargingLocation->getAvailableLocations();
             <?php } ?>
         </tbody>
     </table>
-   
 
     <a href="admin_dashboard.php" class="btn btn-secondary">Back to Dashboard</a>
 </div>

@@ -33,7 +33,7 @@ class User {
         $stmt->execute();
         $result = $stmt->get_result();
         $user = $result->fetch_assoc();
-        
+
         if ($user && password_verify($password, $user["password"])) {
             session_start();
             $_SESSION["user_id"] = $user["id"];
@@ -59,20 +59,52 @@ class User {
         return $this->conn->query($sql);
     }
 
-    public function searchUsers($search = "", $type = "") {
-        $sql = "SELECT id, name, email, phone, type FROM users WHERE name LIKE ? OR email LIKE ?";
-        $params = ["ss", "%".$search."%", "%".$search."%"];
-    
-        if (!empty($type)) {
-            $sql .= " AND type = ?";
-            $params[0] .= "s";
-            $params[] = $type;
-        }
+    public function searchUsers($search = "", $type = "user") {
+        $sql = "SELECT id, name, email, phone, type FROM users WHERE (name LIKE ? OR email LIKE ?) AND type = ?";
+        $params = ["sss", "%".$search."%", "%".$search."%", $type];
     
         $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param(...$params);
-        $stmt->execute();
-        return $stmt->get_result();
+        if ($stmt) {
+            $stmt->bind_param(...$params);
+            $stmt->execute();
+            return $stmt->get_result();
+        } else {
+            return false;
+        }
     }
+    
+    public function getUserById($id) {
+        $sql = "SELECT id, name, email, phone, type FROM users WHERE id = ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_assoc();
+    }
+    
+    public function updateUser($id, $name, $email, $phone, $type) {
+        $sql = "UPDATE users SET name = ?, email = ?, phone = ?, type = ? WHERE id = ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("ssssi", $name, $email, $phone, $type, $id);
+        return $stmt->execute();
+    }
+    public function deleteUser($id) {
+        // Delete all check-in records related to this user
+        $sql1 = "DELETE FROM check_ins WHERE user_id = ?";
+        $stmt1 = $this->conn->prepare($sql1);
+        $stmt1->bind_param("i", $id);
+        $stmt1->execute();
+        $stmt1->close();
+    
+        // Delete the user
+        $sql2 = "DELETE FROM users WHERE id = ?";
+        $stmt2 = $this->conn->prepare($sql2);
+        $stmt2->bind_param("i", $id);
+        $result = $stmt2->execute();
+        $stmt2->close();
+    
+        return $result;
+    }
+    
+    
 }
 ?>

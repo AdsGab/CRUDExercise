@@ -10,7 +10,11 @@ if (!$user->isAdmin()) {
 }
 
 $chargingLocation = new ChargingLocation();
-$locations = $chargingLocation->getAllLocations();
+
+$keyword = $_GET["search"] ?? "";
+$min_cost = $_GET["min_cost"] ?? "";
+$max_cost = $_GET["max_cost"] ?? "";
+$locations = $chargingLocation->searchLocations($keyword, $min_cost, $max_cost, "");
 ?>
 
 <!DOCTYPE html>
@@ -25,13 +29,35 @@ $locations = $chargingLocation->getAllLocations();
     <h2 class="text-center">Welcome, Admin!</h2>
     <a href="insert_location.php" class="btn btn-success mb-3">Add New Location</a>
 
+    <h3>Search Charging Locations</h3>
+    <form method="GET" class="mb-3">
+        <div class="row">
+            <div class="col-md-4">
+                <label>Search by Name:</label>
+                <input type="text" name="search" class="form-control" value="<?= htmlspecialchars($keyword) ?>" placeholder="Enter location name">
+            </div>
+            <div class="col-md-3">
+                <label>Min Cost:</label>
+                <input type="number" name="min_cost" class="form-control" value="<?= htmlspecialchars($min_cost) ?>" step="0.01">
+            </div>
+            <div class="col-md-3">
+                <label>Max Cost:</label>
+                <input type="number" name="max_cost" class="form-control" value="<?= htmlspecialchars($max_cost) ?>" step="0.01">
+            </div>
+            <div class="col-md-2">
+                <label>&nbsp;</label>
+                <button type="submit" class="btn btn-primary w-100">Search</button>
+            </div>
+        </div>
+    </form>
+
     <h3>Charging Locations</h3>
     <table class="table">
         <thead>
             <tr>
                 <th>ID</th>
                 <th>Description</th>
-                <th>Stations</th>
+                <th>Stations Available</th>
                 <th>Cost/Hour</th>
                 <th>Actions</th>
             </tr>
@@ -51,6 +77,7 @@ $locations = $chargingLocation->getAllLocations();
             <?php } ?>
         </tbody>
     </table>
+
     <a href="admin_checkin.php" class="btn btn-info w-100 mb-3">View All Check-ins</a>
     <a href="admin_users.php" class="btn btn-info w-100 mb-3">Manage Users</a>
     <a href="logout.php" class="btn btn-danger w-100">Logout</a>

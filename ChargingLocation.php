@@ -10,6 +10,7 @@ class ChargingLocation {
     }
 
     public function getAllLocations() {
+		//fetch all Locations from Database
         $sql = "SELECT * FROM charging_locations";
         return $this->conn->query($sql);
     }
@@ -34,10 +35,12 @@ class ChargingLocation {
     }
 
     public function deleteLocation($id) {
-        $stmt = $this->conn->prepare("DELETE FROM charging_locations WHERE id = ?");
+        $sql = "DELETE FROM charging_locations WHERE id = ?";
+        $stmt = $this->conn->prepare($sql);
         $stmt->bind_param("i", $id);
         return $stmt->execute();
     }
+    
 
     public function isAvailable($location_id) {
         $sql = "SELECT num_stations, (SELECT COUNT(*) FROM check_ins WHERE location_id = ? AND end_time IS NULL) AS occupied FROM charging_locations WHERE id = ?";
@@ -75,6 +78,7 @@ class ChargingLocation {
     }
     
     public function getAllCheckins($user_id = "", $status = "") {
+		//Fetch all Checkins from the database
         $sql = "SELECT ci.id, u.name AS user_name, u.email, cl.description, ci.start_time, ci.end_time, ci.total_cost 
                 FROM check_ins ci
                 JOIN users u ON ci.user_id = u.id
@@ -88,7 +92,7 @@ class ChargingLocation {
             $params[0] .= "i";
             $params[] = $user_id;
         }
-    
+		//Modify status on wether or not the end_time is null or not
         if ($status === "active") {
             $sql .= " AND ci.end_time IS NULL";
         } elseif ($status === "completed") {
@@ -124,12 +128,13 @@ class ChargingLocation {
     
         $location_id = $checkin["location_id"];
     
-        // Calculate total cost
+        // Calculate total hours, ensuring a minimum charge of 1 hour
         $sql = "UPDATE check_ins 
                 SET end_time = NOW(), 
-                    total_cost = TIMESTAMPDIFF(HOUR, start_time, NOW()) * 
+                    total_cost = GREATEST(1, CEIL(TIMESTAMPDIFF(SECOND, start_time, NOW()) / 3600)) * 
                     (SELECT cost_per_hour FROM charging_locations WHERE id = ?)
                 WHERE user_id = ? AND location_id = ? AND end_time IS NULL";
+        
         $stmt = $this->conn->prepare($sql);
         $stmt->bind_param("iii", $location_id, $user_id, $location_id);
         $stmt->execute();
@@ -137,6 +142,7 @@ class ChargingLocation {
     
         return true;
     }
+    
     public function getUserHistory($user_id) {
         $sql = "SELECT ci.id, cl.description, ci.start_time, ci.end_time, ci.total_cost 
                 FROM check_ins ci
